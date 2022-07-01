@@ -11,6 +11,7 @@
     "build:ios": "eas build --profile preview --platform ios"
   },
   "dependencies": {
+    "@expo/vector-icons": "^13.0.0",
     "expo": "~45.0.0",
     "expo-device": "~4.2.0",
     "expo-linking": "~3.1.0",

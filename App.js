@@ -8,10 +8,8 @@ import {
 } from 'react-native-safe-area-context'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as Linking from 'expo-linking'
-import * as Device from 'expo-device'
-import * as ScreenOrientation from 'expo-screen-orientation'
-import { DeviceType } from 'expo-device'
 import * as SplashScreen from 'expo-splash-screen'
+import OTAUpdater from './OTAUpdater'
 
 const INJECTED_STYLES = `
 html, body {
@@ -152,6 +150,7 @@ function App() {
         onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
         allowsFullscreenVideo={false}
       />
+      <OTAUpdater />
     </View>
   )
 }
