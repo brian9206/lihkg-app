@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar'
-import { StyleSheet, View } from 'react-native'
+import { BackHandler, Platform, StyleSheet, View } from 'react-native'
 import WebView from 'react-native-webview'
 import {
   initialWindowMetrics,
@@ -10,6 +10,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import * as Linking from 'expo-linking'
 import * as SplashScreen from 'expo-splash-screen'
 import OTAUpdater from './OTAUpdater'
+import {
+  Directions,
+  Gesture,
+  GestureDetector,
+} from 'react-native-gesture-handler'
 
 const INJECTED_STYLES = `
 html, body {
@@ -22,6 +27,8 @@ html.ver-desktop, html.ver-desktop body {
 `
 
 const INJECTED_JAVASCRIPT = `
+let pageType = 'other'
+
 const observer = new MutationObserver((mutationList, observer) => {
   // remove open in app
   const openInAppDiv = document.querySelector('.K8RRn4bHyCRrG1IjoFbTr')
@@ -33,11 +40,22 @@ const observer = new MutationObserver((mutationList, observer) => {
     e.innerHTML = ''
   })
   
+  // remove game button as it is not working
+  document.querySelectorAll('[title="Game Center"]').forEach(e => {
+    e.title = ''
+    e.className = ''
+    e.innerHTML = ''
+  })
+  
   // remove footer
   document.querySelectorAll('._2DLdp-7b_R-zIetW0YAyy_').forEach(e => {
     e.innerHTML = '<br><br>'
     e.className = 'fucked'
   })
+  
+  // hide navbar
+  const navbar = document.querySelector('._1H_MPAqZWxI0DjGT6LORkT')
+  if (navbar) navbar.style.visibility = (pageType === 'thread' && window.innerWidth < 768) ? 'hidden' : ''
 })
 
 observer.observe(document.body, {
@@ -85,16 +103,56 @@ _onResize()
 const style = document.createElement('style')
 style.innerText = \`${INJECTED_STYLES}\`
 document.head.appendChild(style)
+
+// detect current page
+function _onLocationChanged() {  
+  if (location.href.indexOf('/thread/') !== -1) {
+    pageType = 'thread'
+  }
+  else if (location.href.indexOf('/category/') !== -1) {
+    pageType = 'category'
+  }
+  else {
+    pageType = 'other'
+  }
+
+  window.ReactNativeWebView.postMessage(JSON.stringify({
+    type: 'pageChanged',
+    pageType
+  }))
+}
+
+window.history.pushState = new Proxy(window.history.pushState, {
+  apply: (target, thisArg, argArray) => {
+    const retval = target.apply(thisArg, argArray)
+    _onLocationChanged()
+    return retval
+  }
+})
+
+window.history.replaceState = new Proxy(window.history.replaceState, {
+  apply: (target, thisArg, argArray) => {
+    const retval = target.apply(thisArg, argArray)
+    _onLocationChanged()
+    return retval
+  }
+})
+
+window.addEventListener('popstate', _onLocationChanged)
 `
 
 function App() {
   const insets = useSafeAreaInsets()
   const [darkMode, setDarkMode] = useState(false)
+  const [pageType, setPageType] = useState('other')
+  const webViewRef = useRef()
 
   const onMessage = useCallback((e) => {
     const event = JSON.parse(e.nativeEvent.data)
     if (event.type === 'configChanged') {
       setDarkMode(event.config.darkMode)
+    } else if (event.type === 'pageChanged') {
+      setPageType(event.pageType)
     }
   }, [])
 
@@ -122,36 +180,70 @@ function App() {
       await SplashScreen.preventAutoHideAsync()
     }
     ready().then()
+
+    const handleBackPressed = () => {
+      if (webViewRef.current) webViewRef.current.goBack()
+    }
+
+    if (Platform.OS === 'android') {
+      BackHandler.addEventListener('hardwareBackPress', handleBackPressed)
+
+      return () => {
+        BackHandler.removeEventListener('hardwareBackPress', handleBackPressed)
+      }
+    }
   }, [])
 
+  const flingGestureRight = Gesture.Fling()
+    .direction(Directions.RIGHT)
+    .onEnd(() => {
+      if (!webViewRef.current || pageType !== 'thread') return
+
+      // click the back button, and close the navbar
+      webViewRef.current.injectJavaScript(`
+        document.querySelector('.Po8iCa0b9ZUovZ9Ofa_Gk').click()
+        document.querySelector('._3DGiuOeHzi-9xAeU4GPqcb').click()`)
+
+      setTimeout(() => {
+        // fixup navbar
+        webViewRef.current.injectJavaScript(`
+          document.querySelector('._2avg7BNCZG5kjB9vMIsfGj').style.left = '-280px'
+          document.querySelector('._3DGiuOeHzi-9xAeU4GPqcb').style.opacity = '0'
+          document.querySelector('._1H_MPAqZWxI0DjGT6LORkT').className = '_1H_MPAqZWxI0DjGT6LORkT'`)
+      }, 10)
+    })
+
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          paddingTop: insets.top,
-          paddingLeft: insets.left,
-          paddingRight: insets.right,
-          backgroundColor: darkMode ? '#222' : 'white',
-        },
-      ]}
-    >
-      <StatusBar style={darkMode ? 'light' : 'dark'} />
-      <WebView
-        style={{ flex: 1, backgroundColor: darkMode ? '#151515' : '#f6f6f6' }}
-        source={{ uri: 'https://lihkg.com' }}
-        injectedJavaScript={INJECTED_JAVASCRIPT}
-        onMessage={onMessage}
-        onLoadEnd={onLoadEnd}
-        allowsBackForwardNavigationGestures={true}
-        decelerationRate={0.995}
-        showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
-        onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
-        autoManageStatusBarEnabled={false}
-      />
-      <OTAUpdater />
-    </View>
+    <GestureDetector gesture={flingGestureRight}>
+      <View
+        style={[
+          styles.container,
+          {
+            paddingTop: insets.top,
+            paddingLeft: insets.left,
+            paddingRight: insets.right,
+            backgroundColor: darkMode ? '#222' : 'white',
+          },
+        ]}
+      >
+        <StatusBar style={darkMode ? 'light' : 'dark'} />
+        <WebView
+          style={{ flex: 1, backgroundColor: darkMode ? '#151515' : '#f6f6f6' }}
+          source={{ uri: 'https://lihkg.com' }}
+          injectedJavaScript={INJECTED_JAVASCRIPT}
+          onMessage={onMessage}
+          onLoadEnd={onLoadEnd}
+          allowsBackForwardNavigationGestures={true}
+          decelerationRate={0.995}
+          showsHorizontalScrollIndicator={false}
+          showsVerticalScrollIndicator={false}
+          onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+          autoManageStatusBarEnabled={false}
+          ref={webViewRef}
+        />
+        <OTAUpdater />
+      </View>
+    </GestureDetector>
   )
 }
 
