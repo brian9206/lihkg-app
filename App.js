@@ -28,7 +28,7 @@ const observer = new MutationObserver((mutationList, observer) => {
   if (openInAppDiv) openInAppDiv.remove()
   
   // remove fucking ads
-  document.querySelectorAll('.WAy0Ey7yZXz96vkCPtKCd, ._3t1IIUwX87Q7giYt9CBgsT, iframe').forEach(e => {
+  document.querySelectorAll('.WAy0Ey7yZXz96vkCPtKCd, ._3t1IIUwX87Q7giYt9CBgsT, .D0MIrDaQVCROYmrlpFNJp').forEach(e => {
     e.src = 'about:blank'   // in case of iframe
     e.innerHTML = ''
   })
