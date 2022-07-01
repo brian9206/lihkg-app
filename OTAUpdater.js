@@ -42,7 +42,6 @@ export default function OTAUpdater() {
         }
       } catch (err) {
         console.log('Unable to check for updates', err)
-        open()
       }
     }
     ready().then()
