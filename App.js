@@ -17,6 +17,10 @@ const INJECTED_STYLES = `
 html, body {
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
+
+html.ver-desktop, html.ver-desktop body {
+  overflow: hidden;
+}
 `
 
 const INJECTED_JAVASCRIPT = `
@@ -26,7 +30,10 @@ const observer = new MutationObserver((mutationList, observer) => {
   if (openInAppDiv) openInAppDiv.remove()
   
   // remove fucking ads
-  document.querySelectorAll('.WAy0Ey7yZXz96vkCPtKCd, ._3t1IIUwX87Q7giYt9CBgsT').forEach(e => e.remove())
+  document.querySelectorAll('.WAy0Ey7yZXz96vkCPtKCd, ._3t1IIUwX87Q7giYt9CBgsT, iframe').forEach(e => {
+    e.src = 'about:blank'   // in case of iframe
+    e.innerHTML = ''
+  })
   
   // remove footer
   document.querySelectorAll('._2DLdp-7b_R-zIetW0YAyy_').forEach(e => {
@@ -68,6 +75,14 @@ function _onModeSettingsChanged() {
 
 _onModeSettingsChanged()
 
+// detect desktop version
+function _onResize() {
+  document.documentElement.className = 'ver-' + (window.innerWidth >= 768 ? 'desktop' : 'mobile')
+}
+
+window.addEventListener('resize', _onResize)
+_onResize()
+
 // custom style injection
 const style = document.createElement('style')
 style.innerText = \`${INJECTED_STYLES}\`
@@ -107,13 +122,6 @@ function App() {
   useEffect(() => {
     async function ready() {
       await SplashScreen.preventAutoHideAsync()
-
-      const type = await Device.getDeviceTypeAsync()
-      if (type === DeviceType.PHONE) {
-        await ScreenOrientation.lockAsync(
-          ScreenOrientation.OrientationLock.PORTRAIT_UP
-        )
-      }
     }
     ready().then()
   }, [])
@@ -142,6 +150,7 @@ function App() {
         showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
         onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+        allowsFullscreenVideo={false}
       />
     </View>
   )

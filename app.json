@@ -6,6 +6,7 @@
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "backgroundColor": "#000000",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -20,7 +21,17 @@
     "ios": {
       "bundleIdentifier": "com.brian.lihkg",
       "supportsTablet": true,
-      "requireFullScreen": true
+      "infoPlist": {
+        "UISupportedInterfaceOrientations": [
+          "UIInterfaceOrientationPortrait"
+        ],
+        "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationLandscapeRight",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIDeviceOrientationPortrait",
+          "UIDeviceOrientationPortraitUpsideDown"
+        ]
+      }
     },
     "android": {
       "package": "com.brian.lihkg",
