@@ -78,7 +78,7 @@ function _onResize() {
   document.documentElement.className = 'ver-' + (window.innerWidth >= 768 ? 'desktop' : 'mobile')
 }
 
-window.addEventListener('resize', _onResize)
+window.addEventListener('resize', () => setTimeout(_onResize, 500))
 _onResize()
 
 // custom style injection
