@@ -148,7 +148,7 @@ function App() {
         showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
         onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
-        allowsFullscreenVideo={false}
+        autoManageStatusBarEnabled={false}
       />
       <OTAUpdater />
     </View>
