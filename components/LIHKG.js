@@ -167,7 +167,11 @@ function LIHKG() {
     if (e.navigationType === 'click') {
       async function openLink() {
         // try to open youtube link in youtube app
-        if (e.url.indexOf('youtube.com/watch?v=') !== -1) {
+        if (
+          e.url.match(
+            /^https?:\/\/((((www|m)\.)?youtube\.com)|(youtu\.be))\/.+/
+          )
+        ) {
           const ytLink = e.url.replace(/https?/, 'youtube')
           if (await Linking.canOpenURL(ytLink)) {
             await Linking.openURL(ytLink)
