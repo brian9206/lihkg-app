@@ -265,6 +265,13 @@ function LIHKG() {
   useEffect(() => {
     async function ready() {
       await SplashScreen.preventAutoHideAsync()
+
+      const url = getLIHKGUrlByLinking(await Linking.getInitialURL())
+      if (url && webViewRef.current) {
+        webViewRef.current.injectJavaScript(
+          'location.href = ' + JSON.stringify(url)
+        )
+      }
     }
     ready().then()
 
@@ -295,21 +302,11 @@ function LIHKG() {
 
   useEffect(() => {
     const subscription = Linking.addEventListener('url', (event) => {
-      const { hostname, queryParams } = Linking.parse(event.url)
-      if (hostname === 'open_topic') {
-        const { thread_id, page, order } = queryParams
-        const actualUrl =
-          'https://lihkg.com/thread/' +
-          encodeURIComponent(thread_id) +
-          '/page/' +
-          encodeURIComponent(page) +
-          '?order=' +
-          encodeURIComponent(order)
-
-        if (webViewRef.current)
-          webViewRef.current.injectJavaScript(
-            'location.href = ' + JSON.stringify(actualUrl)
-          )
+      const url = getLIHKGUrlByLinking(event.url)
+      if (url && webViewRef.current) {
+        webViewRef.current.injectJavaScript(
+          'location.href = ' + JSON.stringify(url)
+        )
       }
     })
 
@@ -353,3 +350,21 @@ function LIHKG() {
 }
 
 export default forwardRef(LIHKG)
+
+function getLIHKGUrlByLinking(linkingUrl) {
+  const { hostname, queryParams } = Linking.parse(linkingUrl)
+  let url = null
+
+  if (hostname === 'open_topic') {
+    const { thread_id, page, order } = queryParams
+    url =
+      'https://lihkg.com/thread/' +
+      encodeURIComponent(thread_id) +
+      '/page/' +
+      encodeURIComponent(page) +
+      '?order=' +
+      encodeURIComponent(order)
+  }
+
+  return url
+}
