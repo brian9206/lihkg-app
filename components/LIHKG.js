@@ -230,10 +230,8 @@ function LIHKG() {
       async function openLink() {
         // find real url
         let url = e.url
-        if (url.startsWith('https://r.lihkg.com/link?u=')) {
-          url = decodeURIComponent(
-            url.substring('https://r.lihkg.com/link?u='.length)
-          )
+        if (url.startsWith('https://r.lihkg.com/link')) {
+          url = new URLSearchParams(url.substring(url.indexOf('?'))).get('u')
         }
 
         // try to open youtube link in youtube app
@@ -241,9 +239,12 @@ function LIHKG() {
           url.match(/^https?:\/\/((((www|m)\.)?youtube\.com)|(youtu\.be))\/.+/)
         ) {
           const ytLink = url.replace(/https?/, 'youtube')
-          if (await Linking.canOpenURL(ytLink)) {
+          console.log('youtube detected', ytLink)
+          try {
             await Linking.openURL(ytLink)
             return
+          } catch (err) {
+            console.log('unable to open youtube')
           }
         }
 
