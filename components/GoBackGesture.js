@@ -5,7 +5,7 @@ import { FontAwesome, Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { ImpactFeedbackStyle } from 'expo-haptics'
 
-const THRESHOLD = 100
+const THRESHOLD = 50
 
 export default function GoBackGesture({ children, enable, onGesture }) {
   const touchXRef = useRef(new Animated.Value(0))
