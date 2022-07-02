@@ -1,7 +1,14 @@
 ﻿import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Linking from 'expo-linking'
 import * as SplashScreen from 'expo-splash-screen'
-import { BackHandler, Platform, useWindowDimensions, View } from 'react-native'
+import {
+  ActionSheetIOS,
+  BackHandler,
+  Platform,
+  Share,
+  useWindowDimensions,
+  View,
+} from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import WebView from 'react-native-webview'
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react'
@@ -24,10 +31,32 @@ html[data-page-type="thread"][data-ver="mobile"] ._1H_MPAqZWxI0DjGT6LORkT {
 html[data-page-type="thread"][data-ver="mobile"] ._1DZ_Nn0pmLuOkdbW3sB_4B > span:first-child {
   display: none !important;
 }
+
+img {
+  -webkit-touch-callout: none !important;
+}
 `
 
 const INJECTED_JAVASCRIPT = `
 let pageType = 'other'
+
+function onLongPress(element, callback) {
+  let timer;
+
+  element.addEventListener('touchstart', (e) => { 
+    timer = setTimeout(() => {
+      timer = null;
+      callback(e);
+    }, 800);
+  });
+
+  function cancel() {
+    clearTimeout(timer);
+  }
+
+  element.addEventListener('touchend', cancel);
+  element.addEventListener('touchmove', cancel);
+}
 
 const observer = new MutationObserver((mutationList, observer) => {
   // remove open in app
@@ -51,6 +80,20 @@ const observer = new MutationObserver((mutationList, observer) => {
   document.querySelectorAll('._2DLdp-7b_R-zIetW0YAyy_').forEach(e => {
     e.innerHTML = '<br><br>'
     e.className = 'fucked'
+  })
+  
+  // add long press handler to all img
+  document.querySelectorAll('img:not([data-lph="1"])').forEach(e => {
+    e.setAttribute('data-lph', '1')
+    if (e.src.startsWith('https://cdn.lihkg.com/assets/faces/')) return
+    onLongPress(e, (event) => {
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'imageContextMenu',
+        src: e.src,
+        x: event.touches[0].clientX,
+        y: event.touches[0].clientY
+      }))
+    })
   })
 })
 
@@ -145,14 +188,33 @@ function LIHKG() {
   const [pageType, setPageType] = useState('other')
   const webViewRef = useRef()
 
-  const onMessage = useCallback((e) => {
-    const event = JSON.parse(e.nativeEvent.data)
-    if (event.type === 'configChanged') {
-      setDarkMode(event.config.darkMode)
-    } else if (event.type === 'pageChanged') {
-      setPageType(event.pageType)
+  const onImagePress = useCallback((event) => {
+    // get real url
+    let url = event.src
+    if (url.startsWith('https://i.lih.kg/thumbnail')) {
+      url = new URLSearchParams(url.substring(url.indexOf('?'))).get('u')
+    }
+
+    if (Platform.OS === 'ios') {
+      Share.share({ url }).then()
+    } else {
+      Share.share({ message: url }).then()
     }
   }, [])
+
+  const onMessage = useCallback(
+    (e) => {
+      const event = JSON.parse(e.nativeEvent.data)
+      if (event.type === 'configChanged') {
+        setDarkMode(event.config.darkMode)
+      } else if (event.type === 'pageChanged') {
+        setPageType(event.pageType)
+      } else if (event.type === 'imageContextMenu') {
+        onImagePress(event)
+      }
+    },
+    [onImagePress]
+  )
 
   const onShouldStartLoadWithRequest = useCallback((e) => {
     if (
