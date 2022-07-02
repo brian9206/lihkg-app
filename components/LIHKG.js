@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar'
 import WebView from 'react-native-webview'
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react'
 import GoBackGesture from './GoBackGesture'
+import isAdsUrl from '../utils/isAdsUrl'
 
 const INJECTED_STYLES = `
 html, body {
@@ -156,13 +157,28 @@ function LIHKG() {
   const onShouldStartLoadWithRequest = useCallback((e) => {
     if (
       e.url.startsWith('https://lihkg.com/') ||
-      e.url.startsWith('https://lih.kg/') ||
-      e.url.indexOf('recaptcha') !== -1
+      e.url.startsWith('https://lih.kg/')
     )
       return true
 
+    // save some traffic by fucking ads
+    if (isAdsUrl(e.url)) return false
+
     if (e.navigationType === 'click') {
-      Linking.openURL(e.url).then()
+      async function openLink() {
+        // try to open youtube link in youtube app
+        if (e.url.indexOf('youtube.com/watch?v=') !== -1) {
+          const ytLink = e.url.replace(/https?/, 'youtube')
+          if (await Linking.canOpenURL(ytLink)) {
+            await Linking.openURL(ytLink)
+            return
+          }
+        }
+
+        await Linking.openURL(e.url)
+      }
+
+      openLink().then()
       return false
     }
 
@@ -202,6 +218,29 @@ function LIHKG() {
       document.querySelector('._2avg7BNCZG5kjB9vMIsfGj').style.left = '-280px'
       document.querySelector('._3DGiuOeHzi-9xAeU4GPqcb').style.opacity = '0'
       document.querySelector('._1H_MPAqZWxI0DjGT6LORkT').className = '_1H_MPAqZWxI0DjGT6LORkT'`)
+  }, [])
+
+  useEffect(() => {
+    const subscription = Linking.addEventListener('url', (event) => {
+      const { hostname, queryParams } = Linking.parse(event.url)
+      if (hostname === 'open_topic') {
+        const { thread_id, page, order } = queryParams
+        const actualUrl =
+          'https://lihkg.com/thread/' +
+          encodeURIComponent(thread_id) +
+          '/page/' +
+          encodeURIComponent(page) +
+          '?order=' +
+          encodeURIComponent(order)
+
+        if (webViewRef.current)
+          webViewRef.current.injectJavaScript(
+            'location.href = ' + JSON.stringify(actualUrl)
+          )
+      }
+    })
+
+    return () => subscription.remove()
   }, [])
 
   const { width } = useWindowDimensions()

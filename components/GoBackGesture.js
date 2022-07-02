@@ -1,7 +1,7 @@
 ﻿import { Animated, StyleSheet, useWindowDimensions, View } from 'react-native'
 import { PanGestureHandler, State } from 'react-native-gesture-handler'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { FontAwesome, Ionicons } from '@expo/vector-icons'
+import { useCallback, useRef, useState } from 'react'
+import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { ImpactFeedbackStyle } from 'expo-haptics'
 
@@ -115,7 +115,7 @@ export default function GoBackGesture({ children, enable, onGesture }) {
                   {
                     scale: dotAnimRef.current.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [1, 2],
+                      outputRange: [1, 2.5],
                     }),
                   },
                 ],
