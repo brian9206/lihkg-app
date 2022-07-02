@@ -1,7 +1,7 @@
 ﻿import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Linking from 'expo-linking'
 import * as SplashScreen from 'expo-splash-screen'
-import { BackHandler, Platform, View } from 'react-native'
+import { BackHandler, Platform, useWindowDimensions, View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import WebView from 'react-native-webview'
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react'
@@ -204,6 +204,8 @@ function LIHKG() {
       document.querySelector('._1H_MPAqZWxI0DjGT6LORkT').className = '_1H_MPAqZWxI0DjGT6LORkT'`)
   }, [])
 
+  const { width } = useWindowDimensions()
+
   return (
     <View
       style={{
@@ -215,7 +217,10 @@ function LIHKG() {
       }}
     >
       <StatusBar style={darkMode ? 'light' : 'dark'} />
-      <GoBackGesture enable={pageType === 'thread'} onGesture={onGoBackGesture}>
+      <GoBackGesture
+        enable={width < 768 && pageType === 'thread'}
+        onGesture={onGoBackGesture}
+      >
         <WebView
           style={{ flex: 1, backgroundColor: darkMode ? '#151515' : '#f6f6f6' }}
           source={{ uri: 'https://lihkg.com' }}
