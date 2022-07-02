@@ -25,14 +25,14 @@ export default function GoBackGesture({ children, enable, onGesture }) {
 
         if (pass && !passThreshold) {
           Haptics.impactAsync(ImpactFeedbackStyle.Light).then()
-          Animated.timing(dotAnimRef.current, undefined).stop()
+          //Animated.timing(dotAnimRef.current, undefined).stop()
           Animated.timing(dotAnimRef.current, {
             toValue: 1,
             duration: 100,
             useNativeDriver: true,
           }).start()
         } else if (!pass && passThreshold) {
-          Animated.timing(dotAnimRef.current, undefined).stop()
+          //Animated.timing(dotAnimRef.current, undefined).stop()
           Animated.timing(dotAnimRef.current, {
             toValue: 0,
             duration: 100,
@@ -115,7 +115,7 @@ export default function GoBackGesture({ children, enable, onGesture }) {
                   {
                     scale: dotAnimRef.current.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [1, 2.5],
+                      outputRange: [1, 2.25],
                     }),
                   },
                 ],
