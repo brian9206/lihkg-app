@@ -185,8 +185,18 @@ window.addEventListener('popstate', _onLocationChanged)
 function LIHKG() {
   const insets = useSafeAreaInsets()
   const [darkMode, setDarkMode] = useState(false)
+  const [canGoBack, setCanGoBack] = useState(false)
   const [pageType, setPageType] = useState('other')
   const webViewRef = useRef()
+
+  const goBack = useCallback(() => {
+    if (!webViewRef.current) return
+    if (!canGoBack) {
+      webViewRef.current.injectJavaScript('location.href = "https://lihkg.com"')
+    } else {
+      webViewRef.current.goBack()
+    }
+  }, [canGoBack])
 
   const onImagePress = useCallback((event) => {
     // get real url
@@ -275,30 +285,26 @@ function LIHKG() {
     }
     ready().then()
 
-    const handleBackPressed = () => {
-      if (webViewRef.current) webViewRef.current.goBack()
-    }
-
     if (Platform.OS === 'android') {
-      BackHandler.addEventListener('hardwareBackPress', handleBackPressed)
+      BackHandler.addEventListener('hardwareBackPress', goBack)
 
       return () => {
-        BackHandler.removeEventListener('hardwareBackPress', handleBackPressed)
+        BackHandler.removeEventListener('hardwareBackPress', goBack)
       }
     }
-  }, [])
+  }, [goBack])
 
   const onGoBackGesture = useCallback(() => {
     if (!webViewRef.current) return
 
     // click the back button, and close the navbar
-    webViewRef.current.goBack()
+    goBack()
     webViewRef.current
       .injectJavaScript(`document.querySelector('._3DGiuOeHzi-9xAeU4GPqcb').click()
       document.querySelector('._2avg7BNCZG5kjB9vMIsfGj').style.left = '-280px'
       document.querySelector('._3DGiuOeHzi-9xAeU4GPqcb').style.opacity = '0'
       document.querySelector('._1H_MPAqZWxI0DjGT6LORkT').className = '_1H_MPAqZWxI0DjGT6LORkT'`)
-  }, [])
+  }, [goBack])
 
   useEffect(() => {
     const subscription = Linking.addEventListener('url', (event) => {
@@ -336,11 +342,14 @@ function LIHKG() {
           injectedJavaScript={INJECTED_JAVASCRIPT}
           onMessage={onMessage}
           onLoadEnd={onLoadEnd}
+          onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+          onNavigationStateChange={(navState) =>
+            setCanGoBack(navState.canGoBack)
+          }
           allowsBackForwardNavigationGestures={true}
           decelerationRate={0.995}
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
-          onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
           autoManageStatusBarEnabled={false}
           ref={webViewRef}
         />
