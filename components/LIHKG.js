@@ -166,13 +166,19 @@ function LIHKG() {
 
     if (e.navigationType === 'click') {
       async function openLink() {
+        // find real url
+        let url = e.url
+        if (url.startsWith('https://r.lihkg.com/link?u=')) {
+          url = decodeURIComponent(
+            url.substring('https://r.lihkg.com/link?u='.length)
+          )
+        }
+
         // try to open youtube link in youtube app
         if (
-          e.url.match(
-            /^https?:\/\/((((www|m)\.)?youtube\.com)|(youtu\.be))\/.+/
-          )
+          url.match(/^https?:\/\/((((www|m)\.)?youtube\.com)|(youtu\.be))\/.+/)
         ) {
-          const ytLink = e.url.replace(/https?/, 'youtube')
+          const ytLink = url.replace(/https?/, 'youtube')
           if (await Linking.canOpenURL(ytLink)) {
             await Linking.openURL(ytLink)
             return
