@@ -346,6 +346,7 @@ function LIHKG() {
           onNavigationStateChange={(navState) =>
             setCanGoBack(navState.canGoBack)
           }
+          onContentProcessDidTerminate={() => webViewRef.current && webViewRef.current.reload()}
           allowsBackForwardNavigationGestures={true}
           decelerationRate={0.995}
           showsHorizontalScrollIndicator={false}
